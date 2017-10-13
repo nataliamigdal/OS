@@ -1,0 +1,15 @@
+boot.o: boot.S multiboot.h x86_desc.h types.h
+wrapper.o: wrapper.S
+x86_desc.o: x86_desc.S x86_desc.h types.h
+asm2.o: asm2.c idt.h multiboot.h types.h x86_desc.h lib.h i8259.h debug.h \
+  keyboard.h RTC.h rtc.h pages.h asm2.h
+i8259.o: i8259.c i8259.h types.h lib.h
+idt.o: idt.c idt.h multiboot.h types.h x86_desc.h lib.h i8259.h debug.h \
+  keyboard.h RTC.h rtc.h
+kernel.o: kernel.c multiboot.h types.h x86_desc.h lib.h i8259.h debug.h \
+  idt.h keyboard.h RTC.h rtc.h pages.h
+keyboard.o: keyboard.c keyboard.h types.h lib.h i8259.h
+lib.o: lib.c lib.h types.h
+pages.o: pages.c idt.h multiboot.h types.h x86_desc.h lib.h i8259.h \
+  debug.h keyboard.h RTC.h rtc.h pages.h asm2.h
+rtc.o: rtc.c rtc.h x86_desc.h types.h lib.h i8259.h
