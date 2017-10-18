@@ -60,7 +60,7 @@ enable_irq(uint32_t irq_num)
 {
 
 	//if less than 8 --> master
-	if(irq_num < 8) {
+	if(irq_num < TOTAL_IRQ) {
 		// Set the master mask bit to 0 by and-ing with ~1 bitshifted to the right irq line
 		master_mask = inb(MASTER_8259_PORT + 1) & ~(1 << irq_num);
 		// Sending to master data
@@ -69,7 +69,7 @@ enable_irq(uint32_t irq_num)
 	//else --> slave
 	} else {
 		// Set the slave mask bit to 0 by and-ing with ~1 bitshifted to the right slave irq line
-		slave_mask = inb(SLAVE_8259_PORT + 1) & ~(1 << (irq_num - 8));
+		slave_mask = inb(SLAVE_8259_PORT + 1) & ~(1 << (irq_num - TOTAL_IRQ));
 		// Sending to slave data
 		outb(slave_mask, SLAVE_8259_PORT + 1);
 	}
@@ -99,7 +99,7 @@ disable_irq(uint32_t irq_num)
 	//else --> slave
 	} else {
 		// Set the slave mask bit to 1 by or-ing with 1 bitshifted to the right slave irq line
-		slave_mask = inb(SLAVE_8259_PORT + 1) | (1 << (irq_num - 8));
+		slave_mask = inb(SLAVE_8259_PORT + 1) | (1 << (irq_num - TOTAL_IRQ));
 		// Sending to slave data
 		outb(slave_mask, SLAVE_8259_PORT + 1);
 	}
@@ -118,8 +118,8 @@ void
 send_eoi(uint32_t irq_num)
 {
 	//IRQ came from slave PIC, send to both PIC chips
-	if(irq_num >= 8) {
-		outb(EOI | (irq_num - 8),SLAVE_8259_PORT);
+	if(irq_num >= TOTAL_IRQ) {
+		outb(EOI | (irq_num - TOTAL_IRQ),SLAVE_8259_PORT);
 		outb(EOI | ICW3_SLAVE,MASTER_8259_PORT);
 	} else {
 		//IRQ came from master, so only send to master

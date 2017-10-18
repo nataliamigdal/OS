@@ -7,12 +7,15 @@
 #include "i8259.h"
 #include "debug.h"
 #include "keyboard.h"
-#include "RTC.h"
+#include "rtc.h"
+#include "systemCalls.h"
+//#include "scheduling.h"
 
 #define intr_VEC 0x2F
 #define keyboard_VEC 0x21
 #define rtc_VEC 0x28
 #define syscall_VEC 0x80
+#define PIT_VEC 0x20
 
 
 /* set up the IDT table */

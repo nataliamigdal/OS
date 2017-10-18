@@ -11,6 +11,10 @@
 #include "rtc.h"
 #include "keyboard.h"
 #include "pages.h"
+#include "filesystem.h"
+#include "terminal.h"
+#include "systemCalls.h"
+
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -56,6 +60,8 @@ entry (unsigned long magic, unsigned long addr)
 		int mod_count = 0;
 		int i;
 		module_t* mod = (module_t*)mbi->mods_addr;
+		//file_mod_address = (unsigned int)mod->mod_start;
+		filesystem_init((unsigned int)mod->mod_start);
 		while(mod_count < mbi->mods_count) {
 			printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
 			printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
@@ -148,7 +154,6 @@ entry (unsigned long magic, unsigned long addr)
 		ltr(KERNEL_TSS);
 	}
 
-
 	/*set up the idt */
 	make_idt();
 
@@ -157,18 +162,147 @@ entry (unsigned long magic, unsigned long addr)
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
-	initialize_keyboard(); //initialize keyboard
-	rtc_init(); //initialize RTC
-	setup_paging(); //initialize paging
-	
 
+	setup_paging(); //initialize paging
+	rtc_init();
+	cli();
+	//pit_init();
+
+	// //copy it to a random page
+	// turn_off_video(1);
+	// //write_terminal(1, "Tried exiting first shell, restarting...\n", 41);
+	// printf("here\n" );
+	// uint32_t test = ((uint8_t*)VIDEOMEM)[0];
+	// uint32_t test1 = ((uint8_t*)TERM1)[0];
+	// //clear memories
+	// //memset ((void*)TERM1, (int32_t)" ", PAGE_SIZE);
+	// //turn off video then back on
+	// //turn_off_video(1);
+	// turn_on_video(1);
+	// test = ((uint8_t*)VIDEOMEM)[0];
+	// test1 = ((uint8_t*)TERM1)[0];
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
-	printf("Enabling Interrupts\n");
-	sti();
 
+	//printf("Enabling Interrupts\n");
+
+	clear();
+	initialize_keyboard(); //initialize keyboard
+	//sti();
+
+/***************************************RTC TESTS *****************************************/
+/*      Test changing rtc freq, rtc is not set up yet */
+//	Uncomment these lines and lines 33-38 in rtc.c
+	// printf("starting RTC Tests\n");
+	// rtc_open();
+	// rtc_write(freq0, 4);
+	// printf("rtc opened\n");
+	// rtc_read();
+	// long count =0;
+	// unsigned char f=1;
+	// int freq =1;
+	// //for each frequency
+	// while (f < 11){
+	// 	int f_ = f;
+	// 	//get right freq
+	// 	while (f_!=0){
+	// 		freq = freq* 2;
+	// 		f_--;
+	// 	}
+	// 	clear();
+	// 	printf ("\nfreq is: %d \n", freq);
+	// 	rtc_write(freq, 4);
+	// 	while (count<100000000){
+	// 		count++;
+	// 	}
+	// 	freq=1;
+	// 	count =0;
+	// 	f++;
+	// }
+	// rtc_write(freq0, 4);
+	// rtc_close();
+	// printf("\nrtc closed\n
+
+
+/********************************FILE SYSTEM TESTS***********************************/
+	/*test for read_dentry_by_name */
+	/*printf("filename: ");
+	dentry_t tmp_dentry;
+	read_dentry_by_name((uint8_t*)"frame0.txt", &tmp_dentry);
+	puts((int8_t*)tmp_dentry.filename);
+	printf("\n");*/
+
+	//read_data test
+	/*dentry_t tmp_dentry;
+	uint32_t retval;
+	uint32_t index;
+	//index = 1; //sigtest
+	//index = 2; //shell
+	//index = 3; //grep
+	//index = 4; //syserr
+	//index = 5; //rtc
+	//index = 6; //fish
+	//index = 7; //counter
+	//index = 8; //pingpong
+	//index = 9; //cat
+	index = 10; //frame0.txt
+	//index = 11; //verylargetext...
+	//index = 12; //ls
+	//index = 13; //testprint
+	//index = 14; //created.txt
+	//index = 15; //frame1.txt
+	//index = 16; //hello
+	uint32_t file_nbytes = filesize_debug(index);
+	uint8_t random_buf[file_nbytes];
+	read_dentry_by_index(index, &tmp_dentry);
+	retval = read_data(tmp_dentry.inode_num, 0, random_buf, file_nbytes);
+	write_terminal(2, random_buf, file_nbytes);
+	printf("Return value is: %d\n", retval);*/
+
+	/*read directory*/
+	/*int i;
+	while(1)
+	{
+		uint8_t random_buf[32];
+		dir_read(2, (int8_t*)random_buf, 32);
+		//puts((int8_t*) random_buf);
+		for(i = 0; i < 32; i++)
+		{
+			putc(random_buf[i]);
+		}
+		puts("\n");
+	}*/
+
+	//test for read_dentry_by_index
+	//prints filename, file size, and file type
+	/*int random_index, i;
+	for(random_index = 0; random_index < 17; random_index++)
+	{
+		dentry_t tmp_dentry;
+		read_dentry_by_index(random_index, &tmp_dentry);
+		//printf("file name: %s   file size: %d   file type: %d\n", tmp_dentry.filename, filesize_debug(random_index), tmp_dentry.file_type);
+		printf("file name: ");
+		for(i = 0; i < 32; i++)
+		{
+			putc(tmp_dentry.filename[i]);
+		}
+		printf(" file size: %d   file type: %d\n", filesize_debug(random_index), tmp_dentry.file_type);
+	}*/
+
+/******************************* TERMINAL R/W TESTS *************************************/
+
+	/*uint8_t random_buf[128];
+
+	while(1)
+	{
+		read_terminal(2, random_buf, 128);
+		write_terminal(2, random_buf, 128);
+	}*/
+
+
+/*******************************INTERRUPT TESTS****************************************/
 	/*test page fault */
 	//int* b = 0x8D0000;
 	//printf("%d \n", *b);
@@ -177,8 +311,8 @@ entry (unsigned long magic, unsigned long addr)
 	//int i = 5/0;
 
 	/* Execute the first program (`shell') ... */
+	execute((uint8_t*)"shell");
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");
 }
-

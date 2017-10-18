@@ -1,15 +1,33 @@
 boot.o: boot.S multiboot.h x86_desc.h types.h
+sysHandler.o: sysHandler.S
 wrapper.o: wrapper.S
 x86_desc.o: x86_desc.S x86_desc.h types.h
 asm2.o: asm2.c idt.h multiboot.h types.h x86_desc.h lib.h i8259.h debug.h \
-  keyboard.h RTC.h rtc.h pages.h asm2.h
+  keyboard.h rtc.h systemCalls.h terminal.h filesystem.h pages.h asm2.h \
+  scheduling.h
+filesystem.o: filesystem.c filesystem.h types.h lib.h systemCalls.h rtc.h \
+  x86_desc.h idt.h multiboot.h i8259.h debug.h keyboard.h terminal.h \
+  pages.h asm2.h scheduling.h
 i8259.o: i8259.c i8259.h types.h lib.h
 idt.o: idt.c idt.h multiboot.h types.h x86_desc.h lib.h i8259.h debug.h \
-  keyboard.h RTC.h rtc.h
+  keyboard.h rtc.h systemCalls.h terminal.h filesystem.h pages.h asm2.h \
+  scheduling.h
 kernel.o: kernel.c multiboot.h types.h x86_desc.h lib.h i8259.h debug.h \
-  idt.h keyboard.h RTC.h rtc.h pages.h
-keyboard.o: keyboard.c keyboard.h types.h lib.h i8259.h
+  idt.h keyboard.h rtc.h systemCalls.h terminal.h filesystem.h pages.h \
+  asm2.h scheduling.h
+keyboard.o: keyboard.c keyboard.h types.h lib.h i8259.h terminal.h \
+  systemCalls.h rtc.h x86_desc.h idt.h multiboot.h debug.h filesystem.h \
+  pages.h asm2.h scheduling.h
 lib.o: lib.c lib.h types.h
 pages.o: pages.c idt.h multiboot.h types.h x86_desc.h lib.h i8259.h \
-  debug.h keyboard.h RTC.h rtc.h pages.h asm2.h
-rtc.o: rtc.c rtc.h x86_desc.h types.h lib.h i8259.h
+  debug.h keyboard.h rtc.h systemCalls.h terminal.h filesystem.h pages.h \
+  asm2.h scheduling.h
+rtc.o: rtc.c rtc.h x86_desc.h types.h lib.h i8259.h terminal.h keyboard.h
+scheduling.o: scheduling.c scheduling.h systemCalls.h rtc.h x86_desc.h \
+  types.h lib.h idt.h multiboot.h i8259.h debug.h keyboard.h terminal.h \
+  filesystem.h pages.h asm2.h
+systemCalls.o: systemCalls.c systemCalls.h rtc.h x86_desc.h types.h lib.h \
+  idt.h multiboot.h i8259.h debug.h keyboard.h terminal.h filesystem.h \
+  pages.h asm2.h scheduling.h
+terminal.o: terminal.c types.h keyboard.h lib.h i8259.h terminal.h \
+  pages.h x86_desc.h rtc.h multiboot.h

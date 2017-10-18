@@ -27,6 +27,7 @@
  * the interrupt number and sent out to the PIC
  * to declare the interrupt finished */
 #define EOI             0x60
+#define TOTAL_IRQ	8 //total irq lines on one PIC
 
 /* Externally-visible functions */
 

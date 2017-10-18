@@ -6,21 +6,71 @@
 #define VIDEO 0xB8000
 #define NUM_COLS 80
 #define NUM_ROWS 25
-#define ATTRIB 0x7
+#define FOURBITMASK 0x000F
+#define THREEBITMASK 0x000E
+#define TOPBITMASK 	 0xFF00
+#define BITMASKEIGHT 8
+#define CRSRADDR 	 0x03D4
+//#define ATTRIB 0x7
 
+char ATTRIB = 0x7;
 static int screen_x;
 static int screen_y;
+static int start_y_pos;
 static char* video_mem = (char *)VIDEO;
+static int saved_xy[3][2];
+
+
+/*
+* set_attrib;
+*   Inputs: val, new attribute value
+*   Return Value: none
+*	Function: sets ATTRIB to new value
+*/
+void
+set_attrib(char val) {
+	ATTRIB = val;
+}
+
+/*
+* get_attrib;
+*   Inputs: void
+*   Return Value: ATTRIB
+*	Function: returns video memory attribute
+*/
+char
+get_attrib() {
+	return ATTRIB;
+}
 
 /*
 * void clear(void);
 *   Inputs: void
 *   Return Value: none
-*	Function: Clears video memory
+*	Function: Clears video memory and sets current position to top left
 */
-
 void
 clear(void)
+{
+    int32_t i;
+    for(i=0; i<NUM_ROWS*NUM_COLS; i++) {
+        *(uint8_t *)(video_mem + (i << 1)) = ' ';
+        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+    }
+    //Set Position back to top left
+    screen_x = 0;
+    screen_y = 0;
+    start_y_pos = 0;
+}
+
+/*
+* void clear_noxy(void);
+*   Inputs: void
+*   Return Value: none
+*	Function: Clears video memory
+*/
+void
+clear_noxy(void)
 {
     int32_t i;
     for(i=0; i<NUM_ROWS*NUM_COLS; i++) {
@@ -187,16 +237,37 @@ puts(int8_t* s)
 void
 putc(uint8_t c)
 {
+	
     if(c == '\n' || c == '\r') {
-        screen_y++;
-        screen_x=0;
+		screen_y++;
+		if (screen_y == NUM_ROWS)
+		{
+			vertical_scrolling();
+			//screen_y++;
+		}       
+		start_y_pos = screen_y;
+		screen_x = 0;
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
-        screen_x %= NUM_COLS;
-        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+        if(screen_x > 79)
+        {
+        	screen_x = 0;
+			screen_y++;
+        	if (screen_y == NUM_ROWS)
+			{
+				vertical_scrolling();
+				//screen_y++;
+				//start_y_pos--;
+			}
+        }
+        /*screen_x %= NUM_COLS;
+        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;*/
     }
+
+/*    cursor_reset();*/
+
 }
 
 /*
@@ -566,3 +637,255 @@ test_interrupts(void)
 		video_mem[i<<1]++;
 	}
 }
+
+/*
+ * set_x_pos
+	
+ *   DESCRIPTION: sets screen_x to input value
+ *   INPUTS: x
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: screen_x changed to x
+ */
+void
+set_x_pos(int x)
+{
+	screen_x = x;
+}
+
+/*
+ * set_stypos
+	
+ *   DESCRIPTION: sets start_y_pos to input value x
+ *   INPUTS: x
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: start_y_pos is changed to input
+ */
+void
+set_stypos(int x) {
+	start_y_pos = x;
+}
+
+
+/*
+ * get_stypos
+	
+ *   DESCRIPTION: gets start y positions
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: start_y_pos
+ *   SIDE EFFECTS: none
+ */
+int
+get_stypos() {
+	return start_y_pos;
+}
+
+/*
+ * get_x_pos
+	
+ *   DESCRIPTION: get screen x position
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: screen_x
+ *   SIDE EFFECTS: none
+ */
+int
+get_x_pos()
+{
+	return screen_x;
+}
+
+/*
+ * get_y_pos
+	
+ *   DESCRIPTION: get screen y position
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: screen_y
+ *   SIDE EFFECTS: none
+ */
+int
+get_y_pos()
+{
+	return screen_y;
+}
+
+/*
+ * sett_y_pos
+	
+ *   DESCRIPTION: sets screen_y to input y location
+ *   INPUTS: y
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: screen_y changed to input value
+ */
+void
+sett_y_pos(int y)
+{
+	screen_y = y;
+}
+
+/*
+ * set_y_pos
+	
+ *   DESCRIPTION: sets screen_y to starting y location of where buffer should be printed
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: screen_y changed to starting buffer location 
+ */
+
+void
+set_y_pos()
+{
+	//screen_y = start_y_pos;
+}
+
+/*
+ * set_start_y_pos
+	
+ *   DESCRIPTION: sets start_y_pos to current screen_y vlaue
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: start_y_pos changed to screen_y
+ */
+void
+set_start_y_pos()
+{
+	start_y_pos = screen_y;
+}
+
+
+/*
+ * vertical_scrolling
+	
+ *   DESCRIPTION: handles vertical scrolling
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: all lines on terminal moved up 1 row
+ */
+void vertical_scrolling()
+{
+	
+	int x,y;
+
+	for(y = 0; y < NUM_ROWS - 1; y++)
+	{
+		for(x = 0; x < NUM_COLS; x++)
+		{
+			*(uint8_t *)(video_mem + ((NUM_COLS*y + x ) << 1)) = *(uint8_t *)(video_mem + ((NUM_COLS*(y+1) + x) << 1));
+			*(uint8_t *)(video_mem + ((NUM_COLS*y + x) << 1) + 1) = *(uint8_t *)(video_mem + ((NUM_COLS*(y+1) + x) << 1) + 1);
+		}
+	}
+
+	for ( x = 0; x < NUM_COLS; x++)
+	{
+		*(uint8_t *)(video_mem + ((NUM_COLS*(NUM_ROWS-1) + x) << 1)) = ' ';
+        *(uint8_t *)(video_mem + ((NUM_COLS*(NUM_ROWS-1) + x) << 1) + 1) = ATTRIB;
+	}
+
+	screen_y--;
+	
+	
+}
+
+/*
+ * remove_character
+	
+ *   DESCRIPTION: Removes last character from screen and replaces it with a space
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: last character removed from screen
+ */
+void remove_character()
+{
+	// If deleting first character in a line, go up a line
+	if (screen_x == 0)
+	{
+		screen_x = NUM_COLS - 1;
+		screen_y--;
+	}
+
+	else
+		screen_x--;
+
+	putc(' ');
+}
+
+/*
+ * char_print
+	
+ *   DESCRIPTION: Helper function for printing that vertical scrolls and sets x and y position
+ *   INPUTS: c
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: screen_x set to 0 and start_y moved
+ */
+void
+char_print(uint8_t c)
+{
+	screen_x=0;
+	if (screen_y >= NUM_ROWS - 1)
+	{
+		vertical_scrolling();
+		start_y_pos = NUM_ROWS - 2;
+		//screen_y = NUM_ROWS - 1;
+	}   
+
+}
+
+/*
+ * cursor_reset
+	
+ *   DESCRIPTION: moves blinking cursor to screen x and y position
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: cursor moved to current x and y position
+ */
+void
+cursor_reset() {
+
+    uint16_t cursor = screen_x + screen_y*NUM_COLS;
+    
+	outw(THREEBITMASK | (cursor & TOPBITMASK), CRSRADDR);
+	outw(FOURBITMASK | ((cursor << BITMASKEIGHT) & TOPBITMASK), CRSRADDR);
+}
+
+/*
+ * get_video_mem
+	
+ *   DESCRIPTION: gets current video_mem location
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: video_mem
+ *   SIDE EFFECTS: none
+ */
+char*
+get_video_mem() {
+	return video_mem;
+}
+
+/*
+ * switch_xy
+	
+ *   DESCRIPTION: gets screen xy value of terminal being switched to and saves values from previous term
+ *   INPUTS: from , to
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: screen xy values changed
+ */
+void
+switch_xy (uint8_t from, uint8_t to) {
+	saved_xy[from][0] = screen_x;
+	saved_xy[from][1] = screen_y;
+
+	screen_x = saved_xy[to][0];
+	screen_y = saved_xy[to][1];
+}
+

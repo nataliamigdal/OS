@@ -1,4 +1,4 @@
-/* x86_desc.h - Defines for various x86 descriptors, descriptor tables, 
+/* x86_desc.h - Defines for various x86 descriptors, descriptor tables,
  * and selectors
  * vim:ts=4 noexpandtab
  */
@@ -124,6 +124,7 @@ extern uint32_t tss_size;
 extern seg_desc_t tss_desc_ptr;
 extern tss_t tss;
 
+extern void pit_handler_asm();
 extern void rtc_handler_asm();
 extern void keyboard_handler_asm();
 extern void divide_by_zero_asm();

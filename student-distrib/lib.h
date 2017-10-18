@@ -9,6 +9,14 @@
 
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
+char* get_video_mem();
+void switch_xy (uint8_t from, uint8_t to);
+void set_attrib(char val);
+char get_attrib();
+
+
+void char_print(uint8_t c);
+
 int32_t puts(int8_t *s);
 int8_t *itoa(uint32_t value, int8_t* buf, int32_t radix);
 int8_t *strrev(int8_t* s);
@@ -28,6 +36,31 @@ int8_t* strncpy(int8_t* dest, const int8_t*src, uint32_t n);
 int32_t bad_userspace_addr(const void* addr, int32_t len);
 int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 void test_interrupts(void);
+
+// Sets X pos back to 0
+void set_x_pos(int x);
+
+// gets x position
+int get_x_pos();
+// gets y position
+int get_y_pos();
+//sets y position
+void sett_y_pos(int x);
+// sets start y position
+void set_stypos(int x);
+// gets start y position
+int get_stypos();
+// resets cursor value to screen xy
+void cursor_reset();
+
+// sets y pos
+void set_y_pos();
+// sets start_y_pos
+void set_start_y_pos();
+// vertical scrolling when buffer longer than 1 line
+void vertical_scrolling();
+// removes characters from screen
+void remove_character();
 
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit

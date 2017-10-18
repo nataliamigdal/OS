@@ -9,15 +9,15 @@
 
 /*
  * asm_func_init
- *   DESCRIPTION: In-line assembly function that enables paging. 
+ *   DESCRIPTION: In-line assembly function that enables paging.
  *   INPUTS: uint32_t* page_directory - instead of passing in the pageDirectory itself,
 										our code required us to pass in the pointer of the
 										address of pageDirectory[0]
  *   OUTPUTS: none
  *   RETURN VALUE: none
- *   SIDE EFFECTS: puts address of page directory into cr3 register and then set the 
+ *   SIDE EFFECTS: puts address of page directory into cr3 register and then set the
  *				   paging bit of the cr0 register (the 32th bit)
- */   
+ */
 void asm_func_init(uint32_t* page_directory) {
 	asm volatile(
 			"movl %0, %%eax;"	/* loads address of page directoy */
@@ -34,5 +34,4 @@ void asm_func_init(uint32_t* page_directory) {
 			:"r"(page_directory) /*page directory = input */
 			:"%eax"		/*clobbered register */
 	);
-};
-
+}
